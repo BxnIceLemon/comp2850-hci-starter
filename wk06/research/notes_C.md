@@ -48,3 +48,11 @@
 - Explicitly says this would reduce their anxiety.
 
 **Themes**: `reassurance`, `progress_visibility`, `summary_view`, `mental_health`
+
+## Summary (Participant C)
+
+**Top pain points**:
+1. They constantly feel like they are forgetting something, even after entering tasks, because there is no clear confirmation or summary. This leads to repeated checking and ongoing anxiety. → `trust`, `confirmation_feedback`, `reassurance`, `anxiety`
+2. When entering time-sensitive tasks such as medical appointments, the app does not validate dates or warn about past dates, so serious tasks can be silently misconfigured and then missed. → `date_input_error`, `validation`, `error_feedback`, `health_context`
+3. When their eyes are tired or closed, they would prefer to listen rather than read, but the app offers no quick audio summary of tasks. → `audio_summary`, `eye_strain`, `alternative_modalities`
+4. They want a daily reassurance screen that summarises how many tasks there are, what has been completed, and what comes next, so the list feels less “scary” and overwhelming. → `reassurance`, `progress_visibility`, `summary_view`, `mental_health`

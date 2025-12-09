@@ -58,3 +58,12 @@
 - Mentions unreliable mobile signal.
 
 **Themes**: `context_aware_mode`, `simplified_ui`, `offline_support`
+
+## Summary (Participant B)
+
+**Top pain points**:
+1. When using a phone on a moving bus or train with only one thumb free, small and precise touch targets are hard to hit and feel unsafe. → `one_handed_use`, `small_touch_targets`, `situational_impairment`, `mobile_context`
+2. Long, undifferentiated task lists make it hard to see what is truly important right now, leading to endless scrolling, guilt, and decision fatigue. → `prioritisation`, `information_overload`, `decision_fatigue`
+3. On mobile, fine-grained taps are unreliable. They want larger, “chunky” controls and a quick undo to recover from accidental actions. → `touch_target_size`, `error_prevention`, `undo_support`, `mobile_context`
+4. In bright sunlight or when their eyes hurt, low contrast and small text make the app unusable. They are curious about having tasks spoken aloud. → `contrast`, `text_size`, `glare`, `potential_audio_output`
+5. They would like a simplified “travel mode” for commuting, with bigger UI, offline support, and a short summary of today’s tasks to match limited attention and unreliable signal. → `context_aware_mode`, `simplified_ui`, `offline_support`

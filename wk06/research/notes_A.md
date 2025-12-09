@@ -5,7 +5,7 @@
 **Duration**: ~12 minutes  
 
 ### Q1: Last time you used a task manager
-**Response**: "Yesterday evening I used Todoist to plan my coursework. I had a big list of deadlines and I was trying to prioritise which assignment to start first. I mostly used the keyboard shortcuts to add tasks and move them between projects. This can helps me stay focused."
+**Response**: "Yesterday evening I used Todoist to plan my coursework. I had a big list of deadlines and I was trying to prioritise which assignment to start first. I mostly used the keyboard shortcuts to add tasks and move them between projects. This can help me stay focused."
 
 **Observations**:
 - Speaks quite fast, seems used to task tools.
@@ -56,3 +56,11 @@
 - Links this to feeling less overwhelmed.
 
 **Themes**: `cognitive_load`, `focus_mode`, `progress_visibility`
+
+## Summary (Participant A)
+
+**Top pain points**:
+1. When filters reset after a refresh, they lose their context and have to reconstruct what they were focusing on. → `filter_persistence`, `cognitive_load`, `context_loss`
+2. Important or high-risk tasks can be buried among low-priority items, with no clear way to visually highlight or sort by urgency. → `visual_hierarchy`, `salience`, `risk_of_miss`, `deadline_anxiety`
+3. Keyboard-only use is unreliable. Focus can disappear and delete controls are hard to reach or have poor focus indication. → `keyboard_nav`, `focus_indicator`, `delete_controls`, `accessibility`
+4. They want a very simple “today focus mode” that shows only a few critical tasks, to feel less overwhelmed. → `focus_mode`, `cognitive_load`, `progress_visibility`
