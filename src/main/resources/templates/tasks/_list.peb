@@ -1,11 +1,15 @@
 {# Task list partial with accessible result count #}
 <ul id="task-list" aria-describedby="result-count">
   {% for task in page.items %}
-    {% include "tasks/_item.peb" with {"task": task} %}
+    {% if editingId is not null and editingId == task.id %}
+        {% include "tasks/_edit.peb" with {"task": task, "error": error} %}
+    {% else %}
+        {% include "tasks/_item.peb" with {"task": task} %}
+    {% endif %}
   {% endfor %}
 </ul>
 
-{# WCAG 4.1.3: Result count for people using assistive technology #}
+{# WCAG 4.1.3: Result count #}
 <p id="result-count" class="visually-hidden">
   Showing {{ page.items|length }} of {{ page.totalItems }} tasks{% if q %} matching "{{ q }}"{% endif %}
 </p>

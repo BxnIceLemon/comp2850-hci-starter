@@ -1,8 +1,6 @@
 package utils
 
-class Page {
-}
-package utils  // CRITICAL: must be utils, not data!
+import kotlin.math.min
 
 /**
  * Generic pagination container.
@@ -21,11 +19,6 @@ data class Page<T>(
     val nextPage: Int get() = currentPage + 1
 
     companion object {
-        /**
-         * Create paginated subset of items.
-         * REQUIRED: This is the function called in routes!
-         * Usage: Page.paginate(allTasks, currentPage = page, pageSize = 10)
-         */
         fun <T> paginate(
             items: List<T>,
             currentPage: Int = 1,
@@ -35,7 +28,7 @@ data class Page<T>(
             val totalPages = if (totalItems == 0) 1 else (totalItems + pageSize - 1) / pageSize
 
             // Clamp page to valid range [1..totalPages]
-            val validPage = currentPage.coerceIn(1, totalPages)
+            val validPage = currentPage.coerceIn(1, if (totalPages > 0) totalPages else 1)
 
             // Calculate slice bounds
             val startIndex = (validPage - 1) * pageSize

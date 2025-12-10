@@ -12,8 +12,7 @@
 - Result count associated with list via `aria-describedby`.
 
 ## Performance notes
-- Page size: 10 items; consider server time vs client cost.
-- Fragments avoid re-sending the full layout.
+- Page size: 5 items; consider server time vs client cost.
 
 ## Future risks
 - Template duplication between full page and fragments.

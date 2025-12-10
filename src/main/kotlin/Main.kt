@@ -6,14 +6,13 @@ import io.ktor.server.routing.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
 import io.pebbletemplates.pebble.PebbleEngine
-import routes.taskRoutes
-import routes.configureHealthCheck
+import io.pebbletemplates.pebble.loader.ClasspathLoader
+import routes.configureTaskRoutes
 import utils.SessionData
 import java.io.StringWriter
-import io.ktor.util.*
 import io.ktor.util.AttributeKey
+import storage.TaskStore
 
 /**
  * NOTE FOR NON-INTELLIJ IDEs (VSCode, Eclipse, etc.):
@@ -128,28 +127,6 @@ fun Application.configureTemplating() {
  */
 val PebbleEngineKey = AttributeKey<PebbleEngine>("PebbleEngine")
 
-/**
- * Render Pebble template to HTML string.
- * Extension function for cleaner template rendering in routes.
- */
-suspend fun ApplicationCall.renderTemplate(
-    templateName: String,
-    context: Map<String, Any> = emptyMap()
-): String {
-    val engine = application.attributes[PebbleEngineKey]
-    val writer = StringWriter()
-    val template = engine.getTemplate(templateName)
-
-    // Auto-add session info to all templates
-    val sessionData = sessions.get<SessionData>()
-    val enrichedContext = context + mapOf(
-        "sessionId" to (sessionData?.id ?: "anonymous"),
-        "isHtmx" to isHtmxRequest()
-    )
-
-    template.evaluate(writer, enrichedContext)
-    return writer.toString()
-}
 
 /**
  * Render a Pebble template to HTML string.
@@ -238,9 +215,10 @@ fun Application.configureSessions() {
  * - Task CRUD: `/tasks`, `/tasks/{id}`, etc.
  */
 fun Application.configureRouting() {
-    val store = TaskStore()  // Create instance
+    val store = TaskStore()
     routing {
-        configureTaskRoutes(store)  // Pass to routes
+        staticResources("/static", "static")
+
+        configureTaskRoutes(store)
     }
-}
 }
