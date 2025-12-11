@@ -314,4 +314,18 @@ fun Routing.configureTaskRoutes(store: TaskStore) {
             call.respondRedirect("/tasks")
         }
     }
+
+    // GET /tasks/{id}/delete/confirm - Show confirmation page (No-JS)
+    get("/tasks/{id}/delete/confirm") {
+        val id = call.parameters["id"]
+        val task = id?.let { store.getById(it) }
+
+        if (task == null) {
+            call.respond(HttpStatusCode.NotFound)
+            return@get
+        }
+
+        val html = renderTemplate("tasks/delete_confirm.peb", mapOf("task" to task))
+        call.respondText(text = html, contentType = ContentType.Text.Html)
+    }
 }
