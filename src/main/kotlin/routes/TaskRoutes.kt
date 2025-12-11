@@ -13,14 +13,18 @@ import utils.Page
 import java.io.StringWriter
 
 fun Routing.configureTaskRoutes(store: TaskStore) {
-
     // 1. Setup Pebble Engine locally
-    val pebble = PebbleEngine.Builder()
-        .loader(ClasspathLoader().apply { prefix = "templates/" })
-        .build()
+    val pebble =
+        PebbleEngine
+            .Builder()
+            .loader(ClasspathLoader().apply { prefix = "templates/" })
+            .build()
 
     // 2. Local helper: Render template to String
-    fun renderTemplate(templateName: String, model: Map<String, Any?>): String {
+    fun renderTemplate(
+        templateName: String,
+        model: Map<String, Any?>,
+    ): String {
         val writer = StringWriter()
         pebble.getTemplate(templateName).evaluate(writer, model)
         return writer.toString()
@@ -31,7 +35,10 @@ fun Routing.configureTaskRoutes(store: TaskStore) {
 
     // GET /tasks/fragment - HTMX search & pagination
     get("/tasks/fragment") {
-        val q = call.request.queryParameters["q"]?.trim().orEmpty()
+        val q =
+            call.request.queryParameters["q"]
+                ?.trim()
+                .orEmpty()
         val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
 
         val tasks = store.search(q).map { it.toPebbleContext() }
@@ -46,38 +53,59 @@ fun Routing.configureTaskRoutes(store: TaskStore) {
 
     // GET /tasks - Full Page Load
     get("/tasks") {
-        val q = call.request.queryParameters["q"]?.trim().orEmpty()
+        val q =
+            call.request.queryParameters["q"]
+                ?.trim()
+                .orEmpty()
         val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
+
+        // Capture error parameter from query string (for No-JS validation)
+        val error = call.request.queryParameters["error"]
 
         val tasks = store.search(q).map { it.toPebbleContext() }
         val pageData = Page.paginate(tasks, currentPage = page, pageSize = 10)
 
-        val html = renderTemplate("tasks/index.peb", mapOf(
-            "page" to pageData,
-            "q" to q,
-            "title" to "Tasks"
-        ))
+        val html =
+            renderTemplate(
+                "tasks/index.peb",
+                mapOf(
+                    "page" to pageData,
+                    "q" to q,
+                    "title" to "Tasks",
+                    "error" to error, // Pass error to template
+                ),
+            )
         call.respondText(text = html, contentType = ContentType.Text.Html)
     }
 
     // POST /tasks - Add new task
+    // with Server-Side Validation
     post("/tasks") {
         val params = call.receiveParameters()
         val title = params["title"]?.trim().orEmpty()
         val priority = params["priority"]?.trim().takeIf { !it.isNullOrBlank() }
 
+        // 1. Validation Logic
         if (title.isBlank()) {
             if (call.isHtmx()) {
-                val error = """<div id="status" hx-swap-oob="true" role="alert" aria-live="assertive" class="error">
-                    Title is required.
-                </div>"""
-                return@post call.respondText(text = error, contentType = ContentType.Text.Html)
+                // HTMX Error
+                val errorHtml =
+                    """
+                    <small id="title-error" hx-swap-oob="true" style="color: #c62828; font-weight: bold; margin-top: 0.25rem; display: block;">
+                        Title is required. Please enter a task name.
+                    </small>
+                    """.trimIndent()
+
+                call.response.header("HX-Reswap", "none")
+                return@post call.respondText(errorHtml, ContentType.Text.Html, HttpStatusCode.OK)
             } else {
-                call.response.headers.append("Location", "/tasks")
+                // No-JS Error
+                call.response.headers.append("Location", "/tasks?error=title")
                 return@post call.respond(HttpStatusCode.SeeOther)
             }
         }
 
+        // 2. Success Logic
         val newTask = Task(title = title, priority = priority)
         store.add(newTask)
 
@@ -87,29 +115,43 @@ fun Routing.configureTaskRoutes(store: TaskStore) {
 
             val list = renderTemplate("tasks/_list.peb", mapOf("page" to pageData, "q" to ""))
             val pager = renderTemplate("tasks/_pager.peb", mapOf("page" to pageData, "q" to ""))
+
             val status = """<div id="status" hx-swap-oob="true" class="success">Task "${newTask.title}" added.</div>"""
 
+            val clearErrorHtml = """
+                <small id="title-error" hx-swap-oob="true" style="display: none;">
+                </small>
+            """.trimIndent()
+
             return@post call.respondText(
-                text = list + pager + status,
+                text = list + pager + status + clearErrorHtml,
                 contentType = ContentType.Text.Html,
                 status = HttpStatusCode.Created
             )
         }
 
+        // No-JS Success
         call.response.headers.append("Location", "/tasks")
         call.respond(HttpStatusCode.SeeOther)
     }
 
     // POST /tasks/{id}/delete
-    post("/tasks/{id}/delete") {
+    delete("/tasks/{id}") {
         val id = call.parameters["id"]
         val removed = id?.let { store.delete(it) } ?: false
 
-        if (call.isHtmx()) {
-            val message = if (removed) "Task deleted." else "Could not delete task."
-            val status = """<div id="status" hx-swap-oob="true">$message</div>"""
-            return@post call.respondText(text = status, contentType = ContentType.Text.Html)
+        if (removed) {
+            val status = """<div id="status" hx-swap-oob="true">Task deleted.</div>"""
+            call.respondText(text = status, contentType = ContentType.Text.Html)
+        } else {
+            call.respond(HttpStatusCode.NotFound)
         }
+    }
+
+    // 2. No-JS Fallback (Standard HTTP POST)
+    post("/tasks/{id}/delete") {
+        val id = call.parameters["id"]
+        val removed = id?.let { store.delete(it) } ?: false
 
         call.response.headers.append("Location", "/tasks")
         call.respond(HttpStatusCode.SeeOther)
@@ -129,25 +171,36 @@ fun Routing.configureTaskRoutes(store: TaskStore) {
         val errorMessage = if (errorParam == "blank") "Title is required." else null
 
         if (call.isHtmx()) {
-            val html = renderTemplate("tasks/_edit.peb", mapOf(
-                "task" to task.toPebbleContext(),
-                "error" to errorMessage
-            ))
+            val html =
+                renderTemplate(
+                    "tasks/_edit.peb",
+                    mapOf(
+                        "task" to task.toPebbleContext(),
+                        "error" to errorMessage,
+                    ),
+                )
             call.respondText(text = html, contentType = ContentType.Text.Html)
         } else {
-            val q = call.request.queryParameters["q"]?.trim().orEmpty()
+            val q =
+                call.request.queryParameters["q"]
+                    ?.trim()
+                    .orEmpty()
             val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
 
             val tasks = store.search(q).map { it.toPebbleContext() }
             val pageData = Page.paginate(tasks, currentPage = page, pageSize = 5)
 
-            val html = renderTemplate("tasks/index.peb", mapOf(
-                "page" to pageData,
-                "q" to q,
-                "title" to "Tasks",
-                "editingId" to id,
-                "error" to errorMessage
-            ))
+            val html =
+                renderTemplate(
+                    "tasks/index.peb",
+                    mapOf(
+                        "page" to pageData,
+                        "q" to q,
+                        "title" to "Tasks",
+                        "editingId" to id,
+                        "error" to errorMessage,
+                    ),
+                )
             call.respondText(text = html, contentType = ContentType.Text.Html)
         }
     }
@@ -166,10 +219,14 @@ fun Routing.configureTaskRoutes(store: TaskStore) {
             if (call.isHtmx()) {
                 val task = store.getById(id)
                 if (task != null) {
-                    val html = renderTemplate("tasks/_edit.peb", mapOf(
-                        "task" to task.toPebbleContext(),
-                        "error" to "Title is required."
-                    ))
+                    val html =
+                        renderTemplate(
+                            "tasks/_edit.peb",
+                            mapOf(
+                                "task" to task.toPebbleContext(),
+                                "error" to "Title is required.",
+                            ),
+                        )
                     call.respondText(text = html, contentType = ContentType.Text.Html)
                 }
             } else {

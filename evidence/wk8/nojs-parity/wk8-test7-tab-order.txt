@@ -1,0 +1,1 @@
+Skip to main content, Tasks, Health, Title, Priority, Add Task, Filter tasks, Apply Filter, Edit (Task 1), Delete (Task 1), Edit (Task 2), Delete (Task 2), Previous, Next, HTMX Docs, WCAG 2.2, About
