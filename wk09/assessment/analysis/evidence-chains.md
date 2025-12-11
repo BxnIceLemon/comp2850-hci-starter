@@ -45,7 +45,7 @@ agents).
 
 ---
 
-## Chain 3: Effective Error Recovery (Accessibility Win)
+## Chain 3: Effective Error Recovery
 
 **Raw data**:
 
