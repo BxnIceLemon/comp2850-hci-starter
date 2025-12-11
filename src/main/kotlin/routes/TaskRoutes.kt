@@ -10,6 +10,12 @@ import io.pebbletemplates.pebble.loader.ClasspathLoader
 import model.Task
 import storage.TaskStore
 import utils.Page
+import utils.Logger
+import utils.RequestIdKey
+import utils.HandledValidationException
+import utils.timed
+import utils.jsMode
+import utils.newReqId
 import java.io.StringWriter
 
 fun Routing.configureTaskRoutes(store: TaskStore) {
@@ -81,58 +87,60 @@ fun Routing.configureTaskRoutes(store: TaskStore) {
     // POST /tasks - Add new task
     // with Server-Side Validation
     post("/tasks") {
-        val params = call.receiveParameters()
-        val title = params["title"]?.trim().orEmpty()
-        val priority = params["priority"]?.trim().takeIf { !it.isNullOrBlank() }
+        val reqId = newReqId()
+        call.attributes.put(RequestIdKey, reqId)
+        val session = call.request.cookies["sid"] ?: "anon"
+        val jsMode = call.jsMode()
 
-        // 1. Validation Logic
-        if (title.isBlank()) {
-            if (call.isHtmx()) {
-                // HTMX Error
-                val errorHtml =
-                    """
-                    <small id="title-error" hx-swap-oob="true" style="color: #c62828; font-weight: bold; margin-top: 0.25rem; display: block;">
-                        Title is required. Please enter a task name.
-                    </small>
+        call.timed(taskCode = "T3_add", jsMode = jsMode) {
+            val params = call.receiveParameters()
+            val title = params["title"]?.trim().orEmpty()
+            val priority = params["priority"]?.trim().takeIf { !it.isNullOrBlank() }
+
+            // --- Validation Logic ---
+            if (title.isBlank()) {
+                Logger.validationError(session, reqId, "T3_add", "blank_title", jsMode)
+
+                if (call.isHtmx()) {
+                    val errorHtml = """
+                        <small id="title-error" hx-swap-oob="true" style="color: #c62828; font-weight: bold; margin-top: 0.25rem; display: block;">
+                            Title is required. Please enter a task name.
+                        </small>
                     """.trimIndent()
+                    call.response.header("HX-Reswap", "none")
+                    call.respondText(errorHtml, ContentType.Text.Html, HttpStatusCode.OK)
+                } else {
+                    call.response.headers.append("Location", "/tasks?error=title")
+                    call.respond(HttpStatusCode.SeeOther)
+                }
 
-                call.response.header("HX-Reswap", "none")
-                return@post call.respondText(errorHtml, ContentType.Text.Html, HttpStatusCode.OK)
+                throw HandledValidationException()
+            }
+
+            // --- Success Logic ---
+            val newTask = Task(title = title, priority = priority)
+            store.add(newTask)
+
+            if (call.isHtmx()) {
+                val tasks = store.search("").map { it.toPebbleContext() }
+                val pageData = Page.paginate(tasks, currentPage = 1, pageSize = 10)
+                val list = renderTemplate("tasks/_list.peb", mapOf("page" to pageData, "q" to ""))
+                val pager = renderTemplate("tasks/_pager.peb", mapOf("page" to pageData, "q" to ""))
+                val status =
+                    """<div id="status" hx-swap-oob="true" class="success">Task "${newTask.title}" added.</div>"""
+
+                val clearErrorHtml = """<small id="title-error" hx-swap-oob="true" style="display: none;"></small>"""
+
+                call.respondText(
+                    text = list + pager + status + clearErrorHtml,
+                    contentType = ContentType.Text.Html,
+                    status = HttpStatusCode.Created
+                )
             } else {
-                // No-JS Error
-                call.response.headers.append("Location", "/tasks?error=title")
-                return@post call.respond(HttpStatusCode.SeeOther)
+                call.response.headers.append("Location", "/tasks")
+                call.respond(HttpStatusCode.SeeOther)
             }
         }
-
-        // 2. Success Logic
-        val newTask = Task(title = title, priority = priority)
-        store.add(newTask)
-
-        if (call.isHtmx()) {
-            val tasks = store.search("").map { it.toPebbleContext() }
-            val pageData = Page.paginate(tasks, currentPage = 1, pageSize = 10)
-
-            val list = renderTemplate("tasks/_list.peb", mapOf("page" to pageData, "q" to ""))
-            val pager = renderTemplate("tasks/_pager.peb", mapOf("page" to pageData, "q" to ""))
-
-            val status = """<div id="status" hx-swap-oob="true" class="success">Task "${newTask.title}" added.</div>"""
-
-            val clearErrorHtml = """
-                <small id="title-error" hx-swap-oob="true" style="display: none;">
-                </small>
-            """.trimIndent()
-
-            return@post call.respondText(
-                text = list + pager + status + clearErrorHtml,
-                contentType = ContentType.Text.Html,
-                status = HttpStatusCode.Created
-            )
-        }
-
-        // No-JS Success
-        call.response.headers.append("Location", "/tasks")
-        call.respond(HttpStatusCode.SeeOther)
     }
 
     // POST /tasks/{id}/delete
