@@ -1,3 +1,17 @@
-id,title
-2,Test Task
-3,Kotlin 2.2.21 works
+id,title,priority,completed
+6129cd3e-d52a-4e48-b04d-beea69881e39,Alpha,,false
+c05bf53c-cbc2-4122-9cc8-6d6eb8a439af,Bravo,,false
+e5a83753-995b-48ca-91dc-82fe8017d71f,Charlie,,false
+8f2c2c33-0c0c-4af3-9fa5-4a1eb1de2101,Finish math assignment,2,false
+3e9e3bb2-1c54-4661-96e2-1f7c9d0c55da,Clean the kitchen,3,false
+c6bcbdb7-7b71-4c9b-9c5b-50a3e8c1c1c0,Call the bank,1,false
+0f4d8c5b-dc7a-4fd9-8c0d-4de76a67545c,Prepare presentation slides,2,false
+b3c8e172-2dbd-4176-af5e-7a2e5bbbe4a9,Read a chapter of a book,,false
+d8d6b5ce-9e9b-4ba1-ae33-e14ff0ea2f62,Water the plants,1,false
+4f2d7c3d-0b18-4a44-8e50-6a9c05a53e35,Reply to emails,2,false
+a0c1c76a-b529-45dc-bb30-d8a4fa9c820f,Plan weekly schedule,3,false
+1a7bcf9d-1b86-4f16-b7c0-dc81c8c8fc16,Backup important files,1,false
+7e98a0a1-74ac-4f7d-9af3-30f5bb5ed86c,Do a 20-minute workout,2,false
+1c546516-091a-4a66-9e9b-92a2fb0b58f0,Join Mike's party,,false
+6b28ac6d-2db0-46aa-968f-18dc1e3a43e3,Get dressed for the party,,false
+6cf1cd6a-b512-42a5-87d8-eb0d6d1da410,Buying snacks for the party,,false
